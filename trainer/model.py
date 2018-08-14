@@ -4,8 +4,10 @@ import time
 from glob import glob
 from collections import namedtuple
 
-from trainer.module import *
-from trainer.utils import *
+from tensorflow.python.lib.io.file_io import get_matching_files
+
+from module import *
+from utils import *
 
 
 class cyclegan(object):
@@ -137,8 +139,12 @@ class cyclegan(object):
                 print(" [!] Load failed...")
 
         for epoch in range(args.epoch):
-            dataA = glob('{}/*.*'.format(self.dataset_dir + '/trainA'))
-            dataB = glob('{}/*.*'.format(self.dataset_dir + '/trainB'))
+            if args.checkpoint_dir.startswith('gs://'):
+                dataA = get_matching_files('gs://goagent01-1146-mlengine/datasets/{}/*.*'.format(self.dataset_dir + '/trainA'))
+                dataB = get_matching_files('gs://goagent01-1146-mlengine/datasets/{}/*.*'.format(self.dataset_dir + '/trainB'))
+            else:
+                dataA = glob('./datasets/{}/*.*'.format(self.dataset_dir + '/trainA'))
+                dataB = glob('./datasets/{}/*.*'.format(self.dataset_dir + '/trainB'))
             np.random.shuffle(dataA)
             np.random.shuffle(dataB)
             batch_idxs = min(min(len(dataA), len(dataB)), args.train_size) // self.batch_size
@@ -169,8 +175,8 @@ class cyclegan(object):
                 counter += 1
                 print(("Epoch: [%2d] [%4d/%4d] time: %4.4f" % (
                     epoch, idx, batch_idxs, time.time() - start_time)))
-                if np.mod(counter, args.print_freq) == 1:
-                    self.sample_model(args.sample_dir, epoch, idx)
+                # if np.mod(counter, args.print_freq) == 1:
+                #     self.sample_model(args.sample_dir, epoch, idx)
 
                 if np.mod(counter, args.save_freq) == 2:
                     self.save(args.checkpoint_dir, counter)
@@ -202,8 +208,8 @@ class cyclegan(object):
             return False
 
     def sample_model(self, sample_dir, epoch, idx):
-        dataA = glob('{}/*.*'.format(self.dataset_dir + '/testA'))
-        dataB = glob('{}/*.*'.format(self.dataset_dir + '/testB'))
+        dataA = glob('./datasets/{}/*.*'.format(self.dataset_dir + '/testA'))
+        dataB = glob('./datasets/{}/*.*'.format(self.dataset_dir + '/testB'))
         np.random.shuffle(dataA)
         np.random.shuffle(dataB)
         batch_files = list(zip(dataA[:self.batch_size], dataB[:self.batch_size]))
@@ -225,9 +231,9 @@ class cyclegan(object):
         init_op = tf.global_variables_initializer()
         self.sess.run(init_op)
         if args.which_direction == 'AtoB':
-            sample_files = glob('{}/*.*'.format(self.dataset_dir + '/testA'))
+            sample_files = glob('./datasets/{}/*.*'.format(self.dataset_dir + '/testA'))
         elif args.which_direction == 'BtoA':
-            sample_files = glob('{}/*.*'.format(self.dataset_dir + '/testB'))
+            sample_files = glob('./datasets/{}/*.*'.format(self.dataset_dir + '/testB'))
         else:
             raise Exception('--which_direction must be AtoB or BtoA')
 

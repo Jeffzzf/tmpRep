@@ -1,5 +1,5 @@
 from __future__ import division
-from trainer.ops import *
+from ops import *
 
 
 def discriminator(image, options, reuse=False, name="discriminator"):

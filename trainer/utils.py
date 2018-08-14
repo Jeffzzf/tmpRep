@@ -2,16 +2,19 @@
 Some codes from https://github.com/Newmu/dcgan_code
 """
 from __future__ import division
+
+import copy
 import math
 import pprint
-import scipy.misc
+
 import numpy as np
-import copy
-from imageio import imread as _imread
-# try:
-#     _imread = scipy.misc.imread
-# except AttributeError:
-#     from imageio import imread as _imread
+import scipy.misc
+from tensorflow.python.lib.io import file_io
+
+try:
+    _imread = scipy.misc.imread
+except AttributeError:
+    from imageio import imread as _imread
 
 pp = pprint.PrettyPrinter()
 
@@ -83,10 +86,12 @@ def save_images(images, size, image_path):
     return imsave(inverse_transform(images), size, image_path)
 
 def imread(path, is_grayscale = False):
+    if path.startswith('gs://'):
+        path = file_io.FileIO(path, mode='r')
     if (is_grayscale):
         return _imread(path, flatten=True).astype(np.float)
     else:
-        return _imread(path, pilmode='RGB').astype(np.float)
+        return _imread(path, mode='RGB').astype(np.float)
 
 def merge_images(images, size):
     return inverse_transform(images)
